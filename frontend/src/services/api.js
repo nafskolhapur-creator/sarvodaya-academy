@@ -1,0 +1,218 @@
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+
+const buildUrl = (path) => `${apiBaseUrl}${path}`;
+
+const ensureSuccess = async (response) => {
+  const contentType = response.headers.get("content-type") || "";
+  const data = contentType.includes("application/json")
+    ? await response.json()
+    : { message: "Unexpected server response." };
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong.");
+  }
+
+  return data;
+};
+
+const createRequestOptions = (method, body, token) => {
+  const headers = {};
+
+  if (!(body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return {
+    method,
+    headers,
+    body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+  };
+};
+
+export const getSettings = async () => {
+  const response = await fetch(buildUrl("/api/settings"));
+  return ensureSuccess(response);
+};
+
+export const getCourses = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.eligibility) {
+    searchParams.set("eligibility", params.eligibility);
+  }
+
+  if (params.board) {
+    searchParams.set("board", params.board);
+  }
+
+  const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  const response = await fetch(buildUrl(`/api/courses${suffix}`));
+  return ensureSuccess(response);
+};
+
+export const getFeaturedCourses = async () => {
+  const response = await fetch(buildUrl("/api/courses/featured"));
+  return ensureSuccess(response);
+};
+
+export const getPlacementHighlights = async () => {
+  const response = await fetch(buildUrl("/api/placements/highlights"));
+  return ensureSuccess(response);
+};
+
+export const getGalleryItems = async (params = {}) => {
+  const searchParams = new URLSearchParams();
+
+  if (params.category) {
+    searchParams.set("category", params.category);
+  }
+
+  if (params.limit) {
+    searchParams.set("limit", params.limit);
+  }
+
+  const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
+  const response = await fetch(buildUrl(`/api/gallery${suffix}`));
+  return ensureSuccess(response);
+};
+
+export const loginRequest = async (payload) => {
+  const response = await fetch(buildUrl("/api/auth/login"), createRequestOptions("POST", payload));
+  return ensureSuccess(response);
+};
+
+export const getStudentSessionRequest = async (token) => {
+  const response = await fetch(buildUrl("/api/auth/me"), createRequestOptions("GET", undefined, token));
+  return ensureSuccess(response);
+};
+
+export const getDashboard = async (role) => {
+  const response = await fetch(buildUrl(`/api/dashboard/${role}`));
+  return ensureSuccess(response);
+};
+
+export const adminLoginRequest = async (payload) => {
+  const response = await fetch(buildUrl("/api/admin/auth/login"), createRequestOptions("POST", payload));
+  return ensureSuccess(response);
+};
+
+export const getAdminSessionRequest = async (token) => {
+  const response = await fetch(buildUrl("/api/admin/auth/me"), createRequestOptions("GET", undefined, token));
+  return ensureSuccess(response);
+};
+
+const adminRequest = async (path, { method = "GET", body, token } = {}) => {
+  const response = await fetch(buildUrl(`/api/admin${path}`), createRequestOptions(method, body, token));
+  return ensureSuccess(response);
+};
+
+export const getAdminOverview = (token) => adminRequest("/overview", { token });
+export const getAdminCourseSettings = (token) => adminRequest("/course-settings", { token });
+export const updateAdminCourseSettings = (token, body) =>
+  adminRequest("/course-settings", { method: "PUT", token, body });
+export const getAdminWhatsApp = (token) => adminRequest("/whatsapp", { token });
+export const updateAdminWhatsApp = (token, body) =>
+  adminRequest("/whatsapp", { method: "PUT", token, body });
+export const sendAdminWhatsAppMessage = (token, body) =>
+  adminRequest("/whatsapp/send", { method: "POST", token, body });
+export const getAdminLeads = (token) => adminRequest("/leads", { token });
+export const updateAdminLead = (token, leadId, body) =>
+  adminRequest(`/leads/${leadId}`, { method: "PUT", token, body });
+export const getAdminCourses = (token) => adminRequest("/courses", { token });
+export const createAdminCourse = (token, body) =>
+  adminRequest("/courses", { method: "POST", token, body });
+export const updateAdminCourse = (token, courseId, body) =>
+  adminRequest(`/courses/${courseId}`, { method: "PUT", token, body });
+export const deleteAdminCourse = (token, courseId) =>
+  adminRequest(`/courses/${courseId}`, { method: "DELETE", token });
+export const getAdminStudents = (token) => adminRequest("/students", { token });
+export const createAdminStudent = (token, body) =>
+  adminRequest("/students", { method: "POST", token, body });
+export const updateAdminStudent = (token, studentId, body) =>
+  adminRequest(`/students/${studentId}`, { method: "PUT", token, body });
+export const deleteAdminStudent = (token, studentId) =>
+  adminRequest(`/students/${studentId}`, { method: "DELETE", token });
+
+export const getAdminFees = (token) => adminRequest("/fees", { token });
+export const createAdminFee = (token, body) => adminRequest("/fees", { method: "POST", token, body });
+export const markAdminFeePaid = (token, feeId, body) =>
+  adminRequest(`/fees/${feeId}/pay`, { method: "PUT", token, body });
+export const deleteAdminFee = (token, feeId) =>
+  adminRequest(`/fees/${feeId}`, { method: "DELETE", token });
+export const getAdminFeeReminders = (token) => adminRequest("/fee-reminders", { token });
+export const updateAdminFeeReminderSettings = (token, body) =>
+  adminRequest("/fee-reminders/settings", { method: "PUT", token, body });
+export const runAdminFeeReminderCycle = (token, body = {}) =>
+  adminRequest("/fee-reminders/run", { method: "POST", token, body });
+
+export const getAdminMaterials = (token) => adminRequest("/materials", { token });
+export const createAdminMaterial = (token, body) =>
+  adminRequest("/materials", { method: "POST", token, body });
+export const updateAdminMaterial = (token, materialId, body) =>
+  adminRequest(`/materials/${materialId}`, { method: "PUT", token, body });
+export const deleteAdminMaterial = (token, materialId) =>
+  adminRequest(`/materials/${materialId}`, { method: "DELETE", token });
+
+export const getAdminGallery = (token) => adminRequest("/gallery", { token });
+export const createAdminGallery = (token, body) =>
+  adminRequest("/gallery", { method: "POST", token, body });
+export const updateAdminGallery = (token, galleryId, body) =>
+  adminRequest(`/gallery/${galleryId}`, { method: "PUT", token, body });
+export const deleteAdminGallery = (token, galleryId) =>
+  adminRequest(`/gallery/${galleryId}`, { method: "DELETE", token });
+
+export const getAdminTests = (token) => adminRequest("/tests", { token });
+export const createAdminTest = (token, body) => adminRequest("/tests", { method: "POST", token, body });
+export const updateAdminTest = (token, testId, body) =>
+  adminRequest(`/tests/${testId}`, { method: "PUT", token, body });
+export const deleteAdminTest = (token, testId) =>
+  adminRequest(`/tests/${testId}`, { method: "DELETE", token });
+
+export const getAdminInterviews = (token) => adminRequest("/interviews", { token });
+export const createAdminInterview = (token, body) =>
+  adminRequest("/interviews", { method: "POST", token, body });
+export const deleteAdminInterview = (token, interviewId) =>
+  adminRequest(`/interviews/${interviewId}`, { method: "DELETE", token });
+
+export const getAdminCertificates = (token) => adminRequest("/certificates", { token });
+export const createAdminCertificate = (token, body) =>
+  adminRequest("/certificates", { method: "POST", token, body });
+export const deleteAdminCertificate = (token, certificateId) =>
+  adminRequest(`/certificates/${certificateId}`, { method: "DELETE", token });
+
+export const getAdminJobs = (token) => adminRequest("/jobs", { token });
+export const createAdminJob = (token, body) => adminRequest("/jobs", { method: "POST", token, body });
+export const updateAdminJob = (token, jobId, body) =>
+  adminRequest(`/jobs/${jobId}`, { method: "PUT", token, body });
+export const toggleAdminJobApplicant = (token, jobId, body) =>
+  adminRequest(`/jobs/${jobId}/applicants`, { method: "POST", token, body });
+export const deleteAdminJob = (token, jobId) =>
+  adminRequest(`/jobs/${jobId}`, { method: "DELETE", token });
+export const getAdminPlacements = (token) => adminRequest("/placements", { token });
+export const createAdminPlacement = (token, body) =>
+  adminRequest("/placements", { method: "POST", token, body });
+export const updateAdminPlacement = (token, placementId, body) =>
+  adminRequest(`/placements/${placementId}`, { method: "PUT", token, body });
+export const deleteAdminPlacement = (token, placementId) =>
+  adminRequest(`/placements/${placementId}`, { method: "DELETE", token });
+
+const studentRequest = async (path, { method = "GET", body, token } = {}) => {
+  const response = await fetch(buildUrl(`/api/student${path}`), createRequestOptions(method, body, token));
+  return ensureSuccess(response);
+};
+
+export const getStudentProfile = (token) => studentRequest("/profile", { token });
+export const getStudentFees = (token) => studentRequest("/fees", { token });
+export const getStudentMaterials = (token) => studentRequest("/materials", { token });
+export const getStudentTests = (token) => studentRequest("/tests", { token });
+export const submitStudentTest = (token, testId) =>
+  studentRequest(`/tests/${testId}/submit`, { method: "POST", token });
+export const getStudentJobs = (token) => studentRequest("/jobs", { token });
+export const applyStudentJob = (token, jobId) =>
+  studentRequest(`/jobs/${jobId}/apply`, { method: "POST", token });
+export const getStudentCertificates = (token) => studentRequest("/certificates", { token });
+export const getStudentPlacements = (token) => studentRequest("/placements", { token });

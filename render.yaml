@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: sarvodaya-academy-api
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: TRUST_PROXY
+        value: "1"
+  - type: static
+    name: sarvodaya-academy-web
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    pullRequestPreviewsEnabled: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
