@@ -13,7 +13,7 @@ export const matchesEligibilityFilter = (courseEligibility, selectedEligibility)
   return courseEligibility === selectedEligibility;
 };
 
-export const buildWhatsappUrl = (whatsappNumber, courseTitle) => {
+export const buildWhatsappUrl = (whatsappNumber, courseTitle, instituteName = "Sarvodaya Academy") => {
   const sanitizedNumber = String(whatsappNumber || "")
     .replace(/[^\d]/g, "");
 
@@ -21,7 +21,7 @@ export const buildWhatsappUrl = (whatsappNumber, courseTitle) => {
     return "";
   }
 
-  const message = `Hello, I want enquiry for ${courseTitle} at Sarvodaya Academy.`;
+  const message = `Hello, I want enquiry for ${courseTitle} at ${instituteName}.`;
 
   return `https://wa.me/${sanitizedNumber}?text=${encodeURIComponent(message)}`;
 };

@@ -150,6 +150,10 @@ const instituteSettingsSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    websiteBannerUrl: {
+      type: String,
+      default: "",
+    },
     contactEmail: {
       type: String,
       trim: true,

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 import AppIcon from "../components/AppIcon";
 import { useAuth } from "../context/AuthContext";
+import { useBranding } from "../context/BrandingContext";
 
 const publicNavItems = [
   { to: "/", label: "Home", icon: "home" },
@@ -13,6 +14,7 @@ const publicNavItems = [
 
 function MainLayout() {
   const { user, logout, continueAsGuest } = useAuth();
+  const { branding, resolvedBannerUrl, resolvedLogoUrl } = useBranding();
   const navigate = useNavigate();
 
   const handleGuestAccess = () => {
@@ -23,14 +25,25 @@ function MainLayout() {
   return (
     <div className="app-shell">
       <aside className="app-sidebar-shell">
-        <div className="app-brand-card">
-          <div className="logo-badge compact">
-            <AppIcon name="spark" size={26} />
+        <div
+          className="app-brand-card"
+          style={
+            resolvedBannerUrl
+              ? {
+                  backgroundImage: `linear-gradient(rgba(10,30,48,0.86), rgba(13,47,72,0.94)), url(${resolvedBannerUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
+          <div className="logo-badge compact branding-logo-frame">
+            <img src={resolvedLogoUrl} alt={branding.instituteName} className="logo-image" />
           </div>
           <div>
-            <p className="eyebrow">Sarvodaya Academy</p>
+            <p className="eyebrow">{branding.instituteName}</p>
             <h1 className="brand-title">Institute ERP</h1>
-            <p className="sidebar-copy">NAFS Fire and Safety College, Kolhapur</p>
+            <p className="sidebar-copy">{branding.instituteSubtitle}</p>
           </div>
         </div>
 
@@ -76,8 +89,8 @@ function MainLayout() {
         <header className="app-topbar">
           <div>
             <p className="eyebrow">Modern Institute Portal</p>
-            <h2 className="shell-title">Sarvodaya Academy</h2>
-            <p className="shell-subtitle">Placements, academics, finance, and admissions on one streamlined workspace.</p>
+            <h2 className="shell-title">{branding.instituteName}</h2>
+            <p className="shell-subtitle">{branding.instituteSubtitle}</p>
           </div>
           <div className="app-topbar-meta">
             <div className="topbar-meta-card">

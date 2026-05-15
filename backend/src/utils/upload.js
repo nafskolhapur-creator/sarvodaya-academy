@@ -88,6 +88,12 @@ export const galleryImageUpload = multer({
   limits: { fileSize: 6 * 1024 * 1024 },
 });
 
+export const brandingAssetUpload = multer({
+  storage: createStorage("branding"),
+  fileFilter: fileFilterByMime(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]),
+  limits: { fileSize: 6 * 1024 * 1024 },
+});
+
 export const buildFileUrl = (req, file) => {
   if (!file) {
     return "";

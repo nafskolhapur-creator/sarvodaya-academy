@@ -1,6 +1,32 @@
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
+
+const stableBackendUrl = "https://sarvodaya-backend.onrender.com";
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || stableBackendUrl).replace(/\/+$/, "");
+const isNativePlatform = typeof Capacitor.isNativePlatform === "function" ? Capacitor.isNativePlatform() : false;
 
 const buildUrl = (path) => `${apiBaseUrl}${path}`;
+
+const normalizeErrorMessage = (error) => {
+  const message = String(error?.message || "").trim();
+
+  if (/failed to fetch/i.test(message) || /network/i.test(message) || /load failed/i.test(message)) {
+    return "Unable to reach the Sarvodaya Academy server. Please check your internet connection and try again.";
+  }
+
+  return message || "Something went wrong.";
+};
+
+const parseNativeResponseData = (data) => {
+  if (typeof data !== "string") {
+    return data ?? {};
+  }
+
+  try {
+    return JSON.parse(data);
+  } catch {
+    return { message: data || "Unexpected server response." };
+  }
+};
 
 const ensureSuccess = async (response) => {
   const contentType = response.headers.get("content-type") || "";
@@ -15,7 +41,17 @@ const ensureSuccess = async (response) => {
   return data;
 };
 
-const createRequestOptions = (method, body, token) => {
+const ensureNativeSuccess = (response) => {
+  const data = parseNativeResponseData(response.data);
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(data.message || "Something went wrong.");
+  }
+
+  return data;
+};
+
+const createHeaders = (body, token) => {
   const headers = {};
 
   if (!(body instanceof FormData)) {
@@ -26,17 +62,49 @@ const createRequestOptions = (method, body, token) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  return {
-    method,
-    headers,
-    body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
-  };
+  return headers;
+};
+
+const createRequestOptions = (method, body, token) => ({
+  method,
+  headers: createHeaders(body, token),
+  body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+});
+
+const request = async (path, { method = "GET", body, token } = {}) => {
+  const url = buildUrl(path);
+
+  if (isNativePlatform && !(body instanceof FormData)) {
+    try {
+      const response = await CapacitorHttp.request({
+        url,
+        method,
+        headers: createHeaders(body, token),
+        data: body || undefined,
+        connectTimeout: 15000,
+        readTimeout: 30000,
+      });
+
+      return ensureNativeSuccess(response);
+    } catch (error) {
+      throw new Error(normalizeErrorMessage(error));
+    }
+  }
+
+  try {
+    const response = await fetch(url, createRequestOptions(method, body, token));
+    return await ensureSuccess(response);
+  } catch (error) {
+    throw new Error(normalizeErrorMessage(error));
+  }
 };
 
 export const getSettings = async () => {
-  const response = await fetch(buildUrl("/api/settings"));
-  return ensureSuccess(response);
+  return request("/api/settings");
 };
+
+export const updateInstituteBranding = async (token, body) =>
+  request("/api/settings", { method: "PUT", body, token });
 
 export const getCourses = async (params = {}) => {
   const searchParams = new URLSearchParams();
@@ -50,18 +118,15 @@ export const getCourses = async (params = {}) => {
   }
 
   const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
-  const response = await fetch(buildUrl(`/api/courses${suffix}`));
-  return ensureSuccess(response);
+  return request(`/api/courses${suffix}`);
 };
 
 export const getFeaturedCourses = async () => {
-  const response = await fetch(buildUrl("/api/courses/featured"));
-  return ensureSuccess(response);
+  return request("/api/courses/featured");
 };
 
 export const getPlacementHighlights = async () => {
-  const response = await fetch(buildUrl("/api/placements/highlights"));
-  return ensureSuccess(response);
+  return request("/api/placements/highlights");
 };
 
 export const getGalleryItems = async (params = {}) => {
@@ -76,39 +141,23 @@ export const getGalleryItems = async (params = {}) => {
   }
 
   const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
-  const response = await fetch(buildUrl(`/api/gallery${suffix}`));
-  return ensureSuccess(response);
+  return request(`/api/gallery${suffix}`);
 };
 
-export const loginRequest = async (payload) => {
-  const response = await fetch(buildUrl("/api/auth/login"), createRequestOptions("POST", payload));
-  return ensureSuccess(response);
-};
+export const loginRequest = async (payload) => request("/api/auth/login", { method: "POST", body: payload });
 
-export const getStudentSessionRequest = async (token) => {
-  const response = await fetch(buildUrl("/api/auth/me"), createRequestOptions("GET", undefined, token));
-  return ensureSuccess(response);
-};
+export const getStudentSessionRequest = async (token) => request("/api/auth/me", { token });
 
 export const getDashboard = async (role) => {
-  const response = await fetch(buildUrl(`/api/dashboard/${role}`));
-  return ensureSuccess(response);
+  return request(`/api/dashboard/${role}`);
 };
 
-export const adminLoginRequest = async (payload) => {
-  const response = await fetch(buildUrl("/api/admin/auth/login"), createRequestOptions("POST", payload));
-  return ensureSuccess(response);
-};
+export const adminLoginRequest = async (payload) =>
+  request("/api/admin/auth/login", { method: "POST", body: payload });
 
-export const getAdminSessionRequest = async (token) => {
-  const response = await fetch(buildUrl("/api/admin/auth/me"), createRequestOptions("GET", undefined, token));
-  return ensureSuccess(response);
-};
+export const getAdminSessionRequest = async (token) => request("/api/admin/auth/me", { token });
 
-const adminRequest = async (path, { method = "GET", body, token } = {}) => {
-  const response = await fetch(buildUrl(`/api/admin${path}`), createRequestOptions(method, body, token));
-  return ensureSuccess(response);
-};
+const adminRequest = async (path, options = {}) => request(`/api/admin${path}`, options);
 
 export const getAdminOverview = (token) => adminRequest("/overview", { token });
 export const getAdminCourseSettings = (token) => adminRequest("/course-settings", { token });
@@ -200,10 +249,7 @@ export const updateAdminPlacement = (token, placementId, body) =>
 export const deleteAdminPlacement = (token, placementId) =>
   adminRequest(`/placements/${placementId}`, { method: "DELETE", token });
 
-const studentRequest = async (path, { method = "GET", body, token } = {}) => {
-  const response = await fetch(buildUrl(`/api/student${path}`), createRequestOptions(method, body, token));
-  return ensureSuccess(response);
-};
+const studentRequest = async (path, options = {}) => request(`/api/student${path}`, options);
 
 export const getStudentProfile = (token) => studentRequest("/profile", { token });
 export const getStudentFees = (token) => studentRequest("/fees", { token });

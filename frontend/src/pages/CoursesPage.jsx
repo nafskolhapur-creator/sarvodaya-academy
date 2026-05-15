@@ -3,25 +3,25 @@ import { useEffect, useMemo, useState } from "react";
 import AppIcon from "../components/AppIcon";
 import CourseCard from "../components/CourseCard";
 import LoadingState from "../components/LoadingState";
+import { useBranding } from "../context/BrandingContext";
 import { boardFilters, eligibilityFilters, matchesEligibilityFilter } from "../courseUtils";
-import { getCourses, getSettings } from "../services/api";
+import { getCourses } from "../services/api";
 
 function CoursesPage() {
   const [courses, setCourses] = useState([]);
-  const [whatsappNumber, setWhatsappNumber] = useState("+91-9730848101");
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState({
     eligibility: "",
     board: "",
   });
   const [error, setError] = useState("");
+  const { branding } = useBranding();
 
   useEffect(() => {
     const loadCatalog = async () => {
       try {
-        const [coursesResponse, settingsResponse] = await Promise.all([getCourses(), getSettings()]);
+        const [coursesResponse] = await Promise.all([getCourses()]);
         setCourses(coursesResponse.courses);
-        setWhatsappNumber(settingsResponse.settings.whatsappNumber);
       } catch (requestError) {
         setError(requestError.message);
       } finally {
@@ -137,7 +137,7 @@ function CoursesPage() {
         <div className="course-grid">
         {filteredCourses.length ? (
           filteredCourses.map((course) => (
-            <CourseCard key={course.id} course={course} whatsappNumber={whatsappNumber} />
+            <CourseCard key={course.id} course={course} whatsappNumber={branding.whatsappNumber} />
           ))
         ) : (
           <div className="info-card">No courses matched the selected filters.</div>

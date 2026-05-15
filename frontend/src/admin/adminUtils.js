@@ -1,5 +1,6 @@
 export const sectionItems = [
   { id: "overview", label: "Overview", icon: "dashboard", caption: "Institute snapshot" },
+  { id: "branding", label: "Branding", icon: "spark", caption: "Logo, banner, and identity" },
   { id: "courses", label: "Courses", icon: "courses", caption: "Catalog and marketing" },
   { id: "whatsapp", label: "WhatsApp", icon: "whatsapp", caption: "Messaging and templates" },
   { id: "gallery", label: "Gallery", icon: "gallery", caption: "Activities and showcase" },

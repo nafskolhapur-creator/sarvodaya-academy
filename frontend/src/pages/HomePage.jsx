@@ -5,8 +5,9 @@ import AppIcon from "../components/AppIcon";
 import CourseCard from "../components/CourseCard";
 import LoadingState from "../components/LoadingState";
 import { useAuth } from "../context/AuthContext";
+import { useBranding } from "../context/BrandingContext";
 import { activityCategories, formatGalleryDate } from "../galleryUtils";
-import { getFeaturedCourses, getGalleryItems, getPlacementHighlights, getSettings } from "../services/api";
+import { getFeaturedCourses, getGalleryItems, getPlacementHighlights } from "../services/api";
 
 const formatCurrency = (value) =>
   new Intl.NumberFormat("en-IN", {
@@ -16,24 +17,22 @@ const formatCurrency = (value) =>
   }).format(Number(value || 0));
 
 function HomePage() {
-  const [settings, setSettings] = useState(null);
   const [featuredCourses, setFeaturedCourses] = useState([]);
   const [placementHighlights, setPlacementHighlights] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [error, setError] = useState("");
   const { continueAsGuest } = useAuth();
+  const { branding, resolvedBannerUrl, resolvedLogoUrl, isBrandingLoading } = useBranding();
   const navigate = useNavigate();
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const [settingsResponse, featuredResponse, placementResponse, galleryResponse] = await Promise.all([
-          getSettings(),
+        const [featuredResponse, placementResponse, galleryResponse] = await Promise.all([
           getFeaturedCourses(),
           getPlacementHighlights(),
           getGalleryItems({ limit: 12 }),
         ]);
-        setSettings(settingsResponse.settings);
         setFeaturedCourses(featuredResponse.courses);
         setPlacementHighlights(placementResponse.highlights);
         setRecentActivities(
@@ -49,7 +48,7 @@ function HomePage() {
     loadSettings();
   }, []);
 
-  if (!settings && !error) {
+  if (isBrandingLoading && !error) {
     return (
       <LoadingState
         title="Loading institute profile"
@@ -66,10 +65,10 @@ function HomePage() {
     <div className="stack-lg">
       <section className="hero-grid">
         <div className="hero-copy">
-          <span className="section-tag">{settings.affiliation}</span>
-          <h2>{settings.instituteName}</h2>
-          <p className="hero-subtitle">{settings.instituteSubtitle}</p>
-          <p>{settings.heroDescription}</p>
+          <span className="section-tag">{branding.affiliation}</span>
+          <h2>{branding.instituteName}</h2>
+          <p className="hero-subtitle">{branding.instituteSubtitle}</p>
+          <p>{branding.heroDescription}</p>
           <div className="hero-points-grid">
             <article className="mini-feature-card">
               <AppIcon name="placements" />
@@ -103,13 +102,20 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="hero-card">
+        <div
+          className="hero-card"
+          style={
+            resolvedBannerUrl
+              ? {
+                  backgroundImage: `linear-gradient(180deg, rgba(15, 95, 141, 0.08), rgba(255, 255, 255, 0.95)), url(${resolvedBannerUrl})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
           <div className="logo-badge">
-            {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt="Institute logo" className="logo-image" />
-            ) : (
-              <span>SA</span>
-            )}
+            <img src={resolvedLogoUrl} alt="Institute logo" className="logo-image" />
           </div>
           <div className="info-card">
             <p className="label">Editable institute fields</p>
@@ -192,7 +198,7 @@ function HomePage() {
             <CourseCard
               key={course.id}
               course={course}
-              whatsappNumber={settings.whatsappNumber}
+              whatsappNumber={branding.whatsappNumber}
             />
           ))}
         </div>
@@ -285,9 +291,9 @@ function HomePage() {
           <p className="section-tag">Contact</p>
           <h3>Reach the Institute</h3>
           <div className="contact-list">
-            <p>{settings.contactEmail}</p>
-            <p>{settings.contactPhone}</p>
-            <p>{settings.address}</p>
+            <p>{branding.contactEmail}</p>
+            <p>{branding.contactPhone}</p>
+            <p>{branding.address}</p>
           </div>
         </article>
 
@@ -297,7 +303,7 @@ function HomePage() {
           <div className="map-frame">
             <iframe
               title="Sarvodaya Academy map"
-              src={settings.mapEmbedUrl}
+              src={branding.mapEmbedUrl}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

@@ -3,6 +3,7 @@ export const defaultInstituteSettings = {
   instituteSubtitle: "NAFS Fire and Safety College, Kolhapur",
   affiliation: "Affiliated with NAFS India",
   logoUrl: "",
+  websiteBannerUrl: "",
   contactEmail: "info@sarvodayaacademy.edu",
   contactPhone: "+91 98765 43210",
   address: "Kolhapur, Maharashtra, India",

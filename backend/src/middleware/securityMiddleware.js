@@ -1,18 +1,28 @@
 import { env } from "../config/env.js";
 
+const capacitorOrigins = [
+  "http://localhost",
+  "https://localhost",
+  "http://127.0.0.1",
+  "https://127.0.0.1",
+  "capacitor://localhost",
+  "ionic://localhost",
+];
+
 const defaultDevOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
 
 export const getAllowedOrigins = () => {
   const configuredOrigins = [
     ...env.corsOrigins,
     env.frontendUrl,
+    ...capacitorOrigins,
   ].filter(Boolean);
 
   if (configuredOrigins.length) {
-    return configuredOrigins;
+    return [...new Set(configuredOrigins)];
   }
 
-  return env.isProduction ? [] : defaultDevOrigins;
+  return env.isProduction ? capacitorOrigins : [...defaultDevOrigins, ...capacitorOrigins];
 };
 
 export const securityHeaders = (_req, res, next) => {

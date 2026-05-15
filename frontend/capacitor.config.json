@@ -1,5 +1,13 @@
 {
   "appId": "com.sarvodaya.nafs",
   "appName": "Sarvodaya Academy",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "hostname": "localhost",
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": [
+      "sarvodaya-backend.onrender.com"
+    ]
+  }
 }

@@ -1,9 +1,11 @@
 import AppIcon from "./AppIcon";
 import { buildWhatsappUrl, getCourseBadges } from "../courseUtils";
+import { useBranding } from "../context/BrandingContext";
 
 function CourseCard({ course, whatsappNumber }) {
+  const { branding } = useBranding();
   const badges = getCourseBadges(course);
-  const enquiryUrl = buildWhatsappUrl(whatsappNumber, course.title);
+  const enquiryUrl = buildWhatsappUrl(whatsappNumber, course.title, branding.instituteName);
 
   return (
     <article className="course-card">

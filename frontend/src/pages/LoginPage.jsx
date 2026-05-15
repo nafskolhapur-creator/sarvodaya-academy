@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import { useBranding } from "../context/BrandingContext";
 
 function LoginPage() {
   const [formState, setFormState] = useState({
@@ -10,6 +11,7 @@ function LoginPage() {
   });
   const [error, setError] = useState("");
   const { login, isLoading } = useAuth();
+  const { branding, resolvedBannerUrl, resolvedLogoUrl } = useBranding();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -32,7 +34,27 @@ function LoginPage() {
 
   return (
     <section className="auth-shell">
-      <div className="auth-panel intro-panel">
+      <div
+        className="auth-panel intro-panel"
+        style={
+          resolvedBannerUrl
+            ? {
+                backgroundImage: `linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)), url(${resolvedBannerUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        <div className="auth-brand-row">
+          <div className="logo-badge compact branding-logo-frame">
+            <img src={resolvedLogoUrl} alt={branding.instituteName} className="logo-image" />
+          </div>
+          <div>
+            <p className="section-tag">{branding.instituteName}</p>
+            <p className="auth-brand-copy">{branding.instituteSubtitle}</p>
+          </div>
+        </div>
         <p className="section-tag">Secure Access</p>
         <h2>Sign in to the institute portal</h2>
         <p>

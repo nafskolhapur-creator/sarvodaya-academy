@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import AppIcon from "../components/AppIcon";
 import LoadingState from "../components/LoadingState";
+import { useBranding } from "../context/BrandingContext";
 import StudentPanelPage from "./StudentPanelPage";
 import { useAuth } from "../context/AuthContext";
 import { getDashboard } from "../services/api";
@@ -14,6 +15,7 @@ const roleLabels = {
 
 function DashboardPage() {
   const { user } = useAuth();
+  const { branding, resolvedLogoUrl } = useBranding();
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState("");
 
@@ -74,6 +76,13 @@ function DashboardPage() {
           </div>
         </div>
         <div className="welcome-card">
+          <div className="dashboard-brand-lockup">
+            <img src={resolvedLogoUrl} alt={branding.instituteName} className="dashboard-brand-logo" />
+            <div>
+              <p className="label">{branding.instituteName}</p>
+              <p>{branding.instituteSubtitle}</p>
+            </div>
+          </div>
           <p className="label">Signed in as</p>
           <h3>{user.name}</h3>
           <p>{user.email}</p>

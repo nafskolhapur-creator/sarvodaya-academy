@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AppIcon from "../components/AppIcon";
+import BrandingSection from "../admin/BrandingSection";
 import CertificatesSection from "../admin/CertificatesSection";
 import CoursesSection from "../admin/CoursesSection";
 import FeesSection from "../admin/FeesSection";
@@ -87,9 +88,11 @@ import {
   updateAdminTest,
   updateAdminWhatsApp,
 } from "../services/api";
+import { useBranding } from "../context/BrandingContext";
 
 function AdminPanelPage() {
   const { admin, adminToken, logoutAdmin } = useAuth();
+  const { branding, resolvedLogoUrl } = useBranding();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState("overview");
   const [loading, setLoading] = useState(true);
@@ -274,7 +277,13 @@ function AdminPanelPage() {
     <div className="admin-shell">
       <aside className="admin-sidebar">
         <div className="admin-brand">
-          <p className="eyebrow">Sarvodaya Academy</p>
+          <div className="dashboard-brand-lockup">
+            <img src={resolvedLogoUrl} alt={branding.instituteName} className="dashboard-brand-logo" />
+            <div className="auth-brand-copy">
+              <p className="eyebrow">{branding.instituteName}</p>
+              <span>{branding.instituteSubtitle}</span>
+            </div>
+          </div>
           <h2>Admin Dashboard</h2>
           <p>{admin?.name}</p>
         </div>
@@ -347,6 +356,9 @@ function AdminPanelPage() {
         {error ? <div className="panel error-text">{error}</div> : null}
 
         {activeSection === "overview" ? <OverviewSection overview={overview} /> : null}
+        {activeSection === "branding" ? (
+          <BrandingSection adminToken={adminToken} runMutation={runMutation} submitting={submitting} />
+        ) : null}
         {activeSection === "courses" ? (
           <CoursesSection
             adminToken={adminToken}
